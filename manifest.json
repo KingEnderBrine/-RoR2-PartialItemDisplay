@@ -1,0 +1,10 @@
+{
+    "name": "PartialItemDisplay",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/KingEnderBrine/-RoR2-PartialItemDisplay",
+    "description": "Allows you to hide some item displays based on a character",
+    "dependencies": [
+        "bbepis-BepInExPack-5.3.1",
+	    "tristanmcpherson-R2API-2.5.14"
+    ]
+}
