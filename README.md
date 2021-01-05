@@ -1,6 +1,9 @@
 # Description
 Allows you to hide some item displays based on a character.
 
+#### Warning
+Be very careful with disabling equipment displays, because doing so might break it in some cases (for example `Milky Chrysalis`, `The Crowdfunder`).
+
 # InLobbyConfig
 Sections are named by a character they are corresponding to.
 Each section can be disabled.
@@ -9,6 +12,10 @@ If you want to disable all item displays for all characters, then enable only `D
 ![](https://cdn.discordapp.com/attachments/706089456855154778/795635695725051924/unknown.png)
 
 # Changelog
+**1.0.2**
+
+* Added several null checks for more stability.
+
 **1.0.1**
 
 * Added `InLobbyConfig` dependency

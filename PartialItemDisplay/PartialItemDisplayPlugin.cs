@@ -18,7 +18,7 @@ namespace PartialItemDisplay
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.KingEnderBrine.InLobbyConfig", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.PartialItemDisplay", "Partial Item Display", "1.0.1")]
+    [BepInPlugin("com.KingEnderBrine.PartialItemDisplay", "Partial Item Display", "1.0.2")]
     public class PartialItemDisplayPlugin : BaseUnityPlugin
     {
         internal static PartialItemDisplayPlugin Instance { get; private set; }
@@ -93,7 +93,7 @@ namespace PartialItemDisplay
 
         private static bool IgnoreEquipmentDisplay(EquipmentIndex index, CharacterBody body)
         {
-            if (!Enabled.Value)
+            if (!Enabled.Value || !body)
             {
                 return false;
             }
@@ -111,7 +111,7 @@ namespace PartialItemDisplay
 
         private static bool IgnoreItemDisplay(ItemIndex itemIndex, CharacterBody body)
         {
-            if (!Enabled.Value)
+            if (!Enabled.Value || !body)
             {
                 return false;
             }
