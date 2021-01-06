@@ -12,6 +12,10 @@ If you want to disable all item displays for all characters, then enable only `D
 ![](https://cdn.discordapp.com/attachments/706089456855154778/795635695725051924/unknown.png)
 
 # Changelog
+**1.0.3**
+
+* Fixed an issue when some symbols in character names causing errors.
+
 **1.0.2**
 
 * Added several null checks for more stability.

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace PartialItemDisplay
 {
@@ -20,12 +21,12 @@ namespace PartialItemDisplay
 
         public ItemDisplayConfigSection(ConfigFile file, string sectionName, bool isEnabledByDefault = false)
         {
-            SectionName = sectionName;
-            SectionEnabled = file.Bind(sectionName, nameof(SectionEnabled), isEnabledByDefault, "Should rules in this section be applied");
-            ItemListType = file.Bind(sectionName, nameof(ItemListType), ListType.Blacklist, "Blacklist - show everything except selected items. Whitelist - show only selected items");
-            EquipmentListType = file.Bind(sectionName, nameof(EquipmentListType), ListType.Blacklist, "Blacklist - show everything except selected items. Whitelist - show only selected items");
-            ItemList = file.Bind(sectionName, nameof(ItemList), "", "Selected items for this section");
-            EquipmentList = file.Bind(sectionName, nameof(EquipmentList), "", "Selected equipment for this section");
+            SectionName = RemoveInvalidCharacters(sectionName);
+            SectionEnabled = file.Bind(SectionName, nameof(SectionEnabled), isEnabledByDefault, "Should rules in this section be applied");
+            ItemListType = file.Bind(SectionName, nameof(ItemListType), ListType.Blacklist, "Blacklist - show everything except selected items. Whitelist - show only selected items");
+            EquipmentListType = file.Bind(SectionName, nameof(EquipmentListType), ListType.Blacklist, "Blacklist - show everything except selected items. Whitelist - show only selected items");
+            ItemList = file.Bind(SectionName, nameof(ItemList), "", "Selected items for this section");
+            EquipmentList = file.Bind(SectionName, nameof(EquipmentList), "", "Selected equipment for this section");
 
             try
             {
@@ -112,6 +113,11 @@ namespace PartialItemDisplay
         private Dictionary<string, string> GetEquipmentOptions()
         {
             return EquipmentCatalog.equipmentDefs.Where(el => el.canDrop).ToDictionary(el => el.name, el => Language.GetString(el.nameToken));
+        }
+
+        private string RemoveInvalidCharacters(string sectionName)
+        {
+            return Regex.Replace(sectionName, @"[=\n\t""'\\[\]]", "");
         }
     }
 }
