@@ -3,22 +3,23 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using R2API.Utils;
+using MonoMod.RuntimeDetour.HookGen;
 using RoR2;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Permissions;
 
 [module: UnverifiableCode]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
+[assembly: R2API.Utils.ManualNetworkRegistration]
+[assembly: EnigmaticThunder.Util.ManualNetworkRegistration]
 namespace PartialItemDisplay
 {
-    [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.KingEnderBrine.InLobbyConfig", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.PartialItemDisplay", "Partial Item Display", "1.0.3")]
+    [BepInPlugin("com.KingEnderBrine.PartialItemDisplay", "Partial Item Display", "1.1.0")]
     public class PartialItemDisplayPlugin : BaseUnityPlugin
     {
         internal static PartialItemDisplayPlugin Instance { get; private set; }
@@ -26,14 +27,14 @@ namespace PartialItemDisplay
 
         private static ConfigEntry<bool> Enabled { get; set; }
         private static ItemDisplayConfigSection DefaultSection { get; set; }
-        private static Dictionary<int, ItemDisplayConfigSection> CharacterSections { get; set; }
+        private static Dictionary<BodyIndex, ItemDisplayConfigSection> CharacterSections { get; set; }
 
         private void Awake()
         {
             Instance = this;
 
-            IL.RoR2.CharacterModel.UpdateItemDisplay += UpdateItemDisplayIL;
-            IL.RoR2.CharacterModel.SetEquipmentDisplay += SetEquipmentDisplayIL;
+            HookEndpointManager.Modify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.UpdateItemDisplay)), (ILContext.Manipulator)UpdateItemDisplayIL);
+            HookEndpointManager.Modify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.SetEquipmentDisplay), BindingFlags.NonPublic | BindingFlags.Instance), (ILContext.Manipulator)SetEquipmentDisplayIL);
         }
 
         private void Start()
@@ -45,8 +46,8 @@ namespace PartialItemDisplay
         {
             Instance = null;
 
-            IL.RoR2.CharacterModel.UpdateItemDisplay -= UpdateItemDisplayIL;
-            IL.RoR2.CharacterModel.SetEquipmentDisplay -= SetEquipmentDisplayIL;
+            HookEndpointManager.Unmodify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.UpdateItemDisplay)), (ILContext.Manipulator)UpdateItemDisplayIL);
+            HookEndpointManager.Unmodify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.SetEquipmentDisplay), BindingFlags.NonPublic | BindingFlags.Instance), (ILContext.Manipulator)SetEquipmentDisplayIL);
         }
 
         private static void UpdateItemDisplayIL(ILContext il)
