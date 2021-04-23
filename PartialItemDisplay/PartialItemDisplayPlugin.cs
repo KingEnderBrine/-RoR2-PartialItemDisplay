@@ -14,12 +14,10 @@ using System.Security.Permissions;
 
 [module: UnverifiableCode]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
-[assembly: R2API.Utils.ManualNetworkRegistration]
-[assembly: EnigmaticThunder.Util.ManualNetworkRegistration]
 namespace PartialItemDisplay
 {
     [BepInDependency("com.KingEnderBrine.InLobbyConfig", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInPlugin("com.KingEnderBrine.PartialItemDisplay", "Partial Item Display", "1.1.0")]
+    [BepInPlugin("com.KingEnderBrine.PartialItemDisplay", "Partial Item Display", "1.1.1")]
     public class PartialItemDisplayPlugin : BaseUnityPlugin
     {
         internal static PartialItemDisplayPlugin Instance { get; private set; }
@@ -35,9 +33,11 @@ namespace PartialItemDisplay
 
             HookEndpointManager.Modify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.UpdateItemDisplay)), (ILContext.Manipulator)UpdateItemDisplayIL);
             HookEndpointManager.Modify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.SetEquipmentDisplay), BindingFlags.NonPublic | BindingFlags.Instance), (ILContext.Manipulator)SetEquipmentDisplayIL);
+
+            RoR2Application.onLoad += OnLoad;
         }
 
-        private void Start()
+        private void OnLoad()
         {
             SetupConfig();
         }
