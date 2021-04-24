@@ -12,6 +12,10 @@ If you want to disable all item displays for all characters, then enable only `D
 ![](https://cdn.discordapp.com/attachments/706089456855154778/795635695725051924/unknown.png)
 
 # Changelog
+**1.1.2**
+
+* Fixed an issue where the mod will fail if a character name starts from space
+
 **1.1.1**
 
 * Fixed an issue where only `Default` section was available.

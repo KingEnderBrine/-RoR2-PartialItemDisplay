@@ -117,7 +117,7 @@ namespace PartialItemDisplay
 
         private string RemoveInvalidCharacters(string sectionName)
         {
-            return Regex.Replace(sectionName, @"[=\n\t""'\\[\]]", "");
+            return Regex.Replace(sectionName, @"[=\n\t""'\\[\]]", "").Trim();
         }
     }
 }

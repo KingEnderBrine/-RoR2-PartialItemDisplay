@@ -17,7 +17,7 @@ using System.Security.Permissions;
 namespace PartialItemDisplay
 {
     [BepInDependency("com.KingEnderBrine.InLobbyConfig", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInPlugin("com.KingEnderBrine.PartialItemDisplay", "Partial Item Display", "1.1.1")]
+    [BepInPlugin("com.KingEnderBrine.PartialItemDisplay", "Partial Item Display", "1.1.2")]
     public class PartialItemDisplayPlugin : BaseUnityPlugin
     {
         internal static PartialItemDisplayPlugin Instance { get; private set; }
