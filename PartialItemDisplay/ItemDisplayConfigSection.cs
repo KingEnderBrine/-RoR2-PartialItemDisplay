@@ -90,7 +90,17 @@ namespace PartialItemDisplay
 
         private Dictionary<string, string> GetItemOptions()
         {
-            return ItemCatalog.itemDefs.Where(el => !el.hidden && el.inDroppableTier).ToDictionary(el => el.name, el => Language.GetString(el.nameToken));
+            return ItemCatalog.itemDefs
+                .Where(el =>
+                    {
+                        if (el.hidden)
+                        {
+                            return false;
+                        }
+                        var tier = ItemTierCatalog.GetItemTierDef(el.tier);
+                        return tier && tier.isDroppable;
+                    })
+                .ToDictionary(el => el.name, el => Language.GetString(el.nameToken));
         }
 
         private List<string> GetEquipmentList()

@@ -9,25 +9,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Security;
 using System.Security.Permissions;
 
-[module: UnverifiableCode]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
+[assembly: AssemblyVersion(PartialItemDisplay.PartialItemDisplayPlugin.Version)]
 namespace PartialItemDisplay
 {
-    [BepInDependency("com.KingEnderBrine.InLobbyConfig", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInPlugin("com.KingEnderBrine.PartialItemDisplay", "Partial Item Display", "1.1.2")]
+    [BepInDependency(InLobbyConfigIntegration.GUID, BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInPlugin(GUID, Name, Version)]
     public class PartialItemDisplayPlugin : BaseUnityPlugin
     {
+        public const string GUID = "com.KingEnderBrine.PartialItemDisplay";
+        public const string Name = "Partial Item Display";
+        public const string Version = "1.2.0";
+
         internal static PartialItemDisplayPlugin Instance { get; private set; }
         internal static ManualLogSource InstanceLogger { get => Instance?.Logger; }
 
-        private static ConfigEntry<bool> Enabled { get; set; }
-        private static ItemDisplayConfigSection DefaultSection { get; set; }
-        private static Dictionary<BodyIndex, ItemDisplayConfigSection> CharacterSections { get; set; }
+        internal static ConfigEntry<bool> Enabled { get; set; }
+        internal static ItemDisplayConfigSection DefaultSection { get; set; }
+        internal static Dictionary<BodyIndex, ItemDisplayConfigSection> CharacterSections { get; set; }
 
-        private void Awake()
+        private void Start()
         {
             Instance = this;
 
@@ -48,6 +51,9 @@ namespace PartialItemDisplay
 
             HookEndpointManager.Unmodify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.UpdateItemDisplay)), (ILContext.Manipulator)UpdateItemDisplayIL);
             HookEndpointManager.Unmodify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.SetEquipmentDisplay), BindingFlags.NonPublic | BindingFlags.Instance), (ILContext.Manipulator)SetEquipmentDisplayIL);
+            
+            InLobbyConfigIntegration.OnDestroy();
+            RoR2Application.onLoad -= OnLoad;
         }
 
         private static void UpdateItemDisplayIL(ILContext il)
@@ -66,8 +72,8 @@ namespace PartialItemDisplay
 
             c.Emit(OpCodes.Ldloc_0);
             c.Emit(OpCodes.Ldarg_0);
-            c.Emit(OpCodes.Ldfld, typeof(CharacterModel).GetField("body"));
-            c.Emit(OpCodes.Call, typeof(PartialItemDisplayPlugin).GetMethod(nameof(IgnoreItemDisplay), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static));
+            c.Emit(OpCodes.Ldfld, typeof(CharacterModel).GetField(nameof(CharacterModel.body)));
+            c.Emit(OpCodes.Call, typeof(PartialItemDisplayPlugin).GetMethod(nameof(IgnoreItemDisplay), BindingFlags.NonPublic | BindingFlags.Static));
             c.Emit(OpCodes.Brtrue, elseLabel);
         }
 
@@ -87,8 +93,8 @@ namespace PartialItemDisplay
 
             c.Emit(OpCodes.Ldarg_1);
             c.Emit(OpCodes.Ldarg_0);
-            c.Emit(OpCodes.Ldfld, typeof(CharacterModel).GetField("body"));
-            c.Emit(OpCodes.Call, typeof(PartialItemDisplayPlugin).GetMethod(nameof(IgnoreEquipmentDisplay), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static));
+            c.Emit(OpCodes.Ldfld, typeof(CharacterModel).GetField(nameof(CharacterModel.body)));
+            c.Emit(OpCodes.Call, typeof(PartialItemDisplayPlugin).GetMethod(nameof(IgnoreEquipmentDisplay), BindingFlags.NonPublic | BindingFlags.Static));
             c.Emit(OpCodes.Brtrue, retLabel);
         }
 
@@ -131,7 +137,7 @@ namespace PartialItemDisplay
         private static bool ProcessEquipmentDisplay(EquipmentIndex index, ItemDisplayConfigSection section)
         {
             var equipmentDef = EquipmentCatalog.GetEquipmentDef(index);
-            if (equipmentDef == null)
+            if (!equipmentDef)
             {
                 return false;
             }
@@ -150,7 +156,7 @@ namespace PartialItemDisplay
         private static bool ProcessItemDisplay(ItemIndex index, ItemDisplayConfigSection section)
         {
             var itemDef = ItemCatalog.GetItemDef(index);
-            if (itemDef == null)
+            if (!itemDef)
             {
                 return false;
             }
@@ -177,26 +183,7 @@ namespace PartialItemDisplay
                         Config,
                         Language.english.GetLocalizedStringByToken(def.displayNameToken)));
 
-            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.InLobbyConfig"))
-            {
-                SetupInLobbyConfig();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        private void SetupInLobbyConfig()
-        {
-            var configEntry = new InLobbyConfig.ModConfigEntry
-            {
-                DisplayName = "Partial Item Display",
-                EnableField = InLobbyConfig.Fields.ConfigFieldUtilities.CreateFromBepInExConfigEntry(Enabled) as InLobbyConfig.Fields.BooleanConfigField,
-            };
-            DefaultSection.ApplyToInLobbyConfig(configEntry);
-            foreach (var characterSection in CharacterSections.Values)
-            {
-                characterSection.ApplyToInLobbyConfig(configEntry);
-            }
-            InLobbyConfig.ModConfigCatalog.Add(configEntry);
+            InLobbyConfigIntegration.OnStart();
         }
     }
 }
