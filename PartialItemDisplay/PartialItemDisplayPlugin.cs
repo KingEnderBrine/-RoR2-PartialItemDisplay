@@ -21,7 +21,7 @@ namespace PartialItemDisplay
     {
         public const string GUID = "com.KingEnderBrine.PartialItemDisplay";
         public const string Name = "Partial Item Display";
-        public const string Version = "1.2.0";
+        public const string Version = "1.2.1";
 
         internal static PartialItemDisplayPlugin Instance { get; private set; }
         internal static ManualLogSource InstanceLogger { get => Instance?.Logger; }
