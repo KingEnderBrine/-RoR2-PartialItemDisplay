@@ -122,7 +122,19 @@ namespace PartialItemDisplay
 
         private Dictionary<string, string> GetEquipmentOptions()
         {
-            return EquipmentCatalog.equipmentDefs.Where(el => el.canDrop).ToDictionary(el => el.name, el => Language.GetString(el.nameToken));
+            return EquipmentCatalog.equipmentDefs
+                .Where(el => el.canDrop || el.isBoss || el.dropOnDeathChance > 0)
+                .ToDictionary(
+                    el => el.name, 
+                    el =>
+                    {
+                        var localized = Language.GetString(el.nameToken);
+                        if (string.IsNullOrWhiteSpace(localized))
+                        {
+                            return el.name;
+                        }
+                        return localized;
+                    });
         }
 
         private string RemoveInvalidCharacters(string sectionName)
