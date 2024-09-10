@@ -90,7 +90,7 @@ namespace PartialItemDisplay
 
         private Dictionary<string, string> GetItemOptions()
         {
-            return ItemCatalog.itemDefs
+            return ItemCatalog.allItemDefs
                 .Where(el =>
                     {
                         if (el.hidden)

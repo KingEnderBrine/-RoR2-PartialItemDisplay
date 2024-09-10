@@ -8,7 +8,6 @@ using RoR2;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Security.Permissions;
 
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -21,7 +20,7 @@ namespace PartialItemDisplay
     {
         public const string GUID = "com.KingEnderBrine.PartialItemDisplay";
         public const string Name = "Partial Item Display";
-        public const string Version = "1.2.1";
+        public const string Version = "1.3.0";
 
         internal static PartialItemDisplayPlugin Instance { get; private set; }
         internal static ManualLogSource InstanceLogger { get => Instance?.Logger; }
