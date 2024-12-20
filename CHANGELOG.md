@@ -1,3 +1,7 @@
+**1.4.0**
+
+* Added configs for all bodies with item displays.
+
 **1.3.0**
 
 * Fixes for `Seekers of the Storm` update

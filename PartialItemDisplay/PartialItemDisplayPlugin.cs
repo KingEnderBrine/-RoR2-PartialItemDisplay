@@ -20,7 +20,7 @@ namespace PartialItemDisplay
     {
         public const string GUID = "com.KingEnderBrine.PartialItemDisplay";
         public const string Name = "Partial Item Display";
-        public const string Version = "1.3.0";
+        public const string Version = "1.4.0";
 
         internal static PartialItemDisplayPlugin Instance { get; private set; }
         internal static ManualLogSource InstanceLogger { get => Instance?.Logger; }
@@ -174,13 +174,38 @@ namespace PartialItemDisplay
         {
             Enabled = Config.Bind("Main", "Enabled", true, "Is this mod enabled");
             DefaultSection = new ItemDisplayConfigSection(Config, "Default", true);
-            CharacterSections = SurvivorCatalog
-                .allSurvivorDefs
-                .ToDictionary(
-                    def => SurvivorCatalog.GetBodyIndexFromSurvivorIndex(def.survivorIndex),
-                    def => new ItemDisplayConfigSection(
-                        Config,
-                        Language.english.GetLocalizedStringByToken(def.displayNameToken)));
+
+            CharacterSections = new Dictionary<BodyIndex, ItemDisplayConfigSection>();
+            foreach (var def in SurvivorCatalog.allSurvivorDefs)
+            {
+                var bodyIndex = SurvivorCatalog.GetBodyIndexFromSurvivorIndex(def.survivorIndex);
+                var configSection = new ItemDisplayConfigSection(
+                    Config,
+                    Language.english.GetLocalizedStringByToken(def.displayNameToken));
+                CharacterSections[bodyIndex] = configSection;
+            }
+
+            foreach (var masterObject in MasterCatalog.allAiMasters)
+            {
+                var master = masterObject.GetComponent<CharacterMaster>();
+                var body = master.bodyPrefab.GetComponent<CharacterBody>();
+                var bodyIndex = body.bodyIndex;
+                if (CharacterSections.ContainsKey(bodyIndex))
+                {
+                    continue;
+                }
+
+                var model = body.GetComponentInChildren<CharacterModel>();
+                if (!model || !model.itemDisplayRuleSet || model.itemDisplayRuleSet.isEmpty)
+                {
+                    continue;
+                }
+
+                var configSection = new ItemDisplayConfigSection(
+                    Config,
+                    Language.english.GetLocalizedStringByToken(body.baseNameToken) + " (" + body.name + ")");
+                CharacterSections[bodyIndex] = configSection;
+            }
 
             InLobbyConfigIntegration.OnStart();
         }
