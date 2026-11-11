@@ -37,17 +37,17 @@ namespace PartialItemDisplay
         private ConfigEntry<ListType> ItemListTypeEntry { get; set; }
         public ListType ItemListType { get; set; }
         private ConfigEntry<string> ItemListEntry { get; set; }
-        public List<string> Items { get; } = new List<string>();
+        public List<string> ItemList { get; } = new List<string>();
 
         private ConfigEntry<ListType> EquipmentListTypeEntry { get; set; }
         public ListType EquipmentListType { get; set; }
         private ConfigEntry<string> EquipmentListEntry { get; set; }
-        public List<string> Equipments { get; } = new List<string>();
+        public List<string> EquipmentList { get; } = new List<string>();
 
         private ConfigEntry<ListType> KeyItemListTypeEntry { get; set; }
         public ListType KeyItemListType { get; set; }
         private ConfigEntry<string> KeyItemListEntry { get; set; }
-        public List<string> KeyItems { get; } = new List<string>();
+        public List<string> KeyItemList { get; } = new List<string>();
 
         public ItemDisplayConfigSection(ConfigFile file, string sectionName, bool alwaysBound = false)
         {
@@ -55,13 +55,13 @@ namespace PartialItemDisplay
             this.alwaysBound = alwaysBound;
             SectionName = RemoveInvalidCharacters(sectionName);
 
-            sectionEnabledDef = new ConfigDefinition(SectionName, nameof(SectionEnabledEntry));
-            itemListTypeDef = new ConfigDefinition(SectionName, nameof(ItemListTypeEntry));
-            equipmentListTypeDef = new ConfigDefinition(SectionName, nameof(EquipmentListTypeEntry));
-            keyItemListTypeDef = new ConfigDefinition(SectionName, nameof(KeyItemListTypeEntry));
-            itemListDef = new ConfigDefinition(SectionName, nameof(ItemListEntry));
-            equipmentListDef = new ConfigDefinition(SectionName, nameof(EquipmentListEntry));
-            keyItemListDef = new ConfigDefinition(SectionName, nameof(KeyItemListEntry));
+            sectionEnabledDef = new ConfigDefinition(SectionName, nameof(SectionEnabled));
+            itemListTypeDef = new ConfigDefinition(SectionName, nameof(ItemListType));
+            equipmentListTypeDef = new ConfigDefinition(SectionName, nameof(EquipmentListType));
+            keyItemListTypeDef = new ConfigDefinition(SectionName, nameof(KeyItemListType));
+            itemListDef = new ConfigDefinition(SectionName, nameof(ItemList));
+            equipmentListDef = new ConfigDefinition(SectionName, nameof(EquipmentList));
+            keyItemListDef = new ConfigDefinition(SectionName, nameof(KeyItemList));
 
             Bind(true);
 
@@ -75,9 +75,9 @@ namespace PartialItemDisplay
                 ItemListType != ListType.Blacklist ||
                 EquipmentListType != ListType.Blacklist ||
                 KeyItemListType != ListType.Blacklist ||
-                Items.Count > 0 ||
-                Equipments.Count > 0 ||
-                KeyItems.Count > 0;
+                ItemList.Count > 0 ||
+                EquipmentList.Count > 0 ||
+                KeyItemList.Count > 0;
 
             if (shouldBind)
             {
@@ -136,13 +136,13 @@ namespace PartialItemDisplay
 
             bound = true;
 
-            SectionEnabledEntry = file.Bind(SectionName, nameof(SectionEnabledEntry), alwaysBound, SectionEnabledDesc);
-            ItemListTypeEntry = file.Bind(SectionName, nameof(ItemListTypeEntry), ListType.Blacklist, ItemListTypeDesc);
-            EquipmentListTypeEntry = file.Bind(SectionName, nameof(EquipmentListTypeEntry), ListType.Blacklist, EquipmentListTypeDesc);
-            KeyItemListTypeEntry = file.Bind(SectionName, nameof(KeyItemListTypeEntry), ListType.Blacklist, KeyItemListTypeDesc);
-            ItemListEntry = file.Bind(SectionName, nameof(ItemListEntry), "", ItemListDesc);
-            EquipmentListEntry = file.Bind(SectionName, nameof(EquipmentListEntry), "", EquipmentListDesc);
-            KeyItemListEntry = file.Bind(SectionName, nameof(KeyItemListEntry), "", KeyItemListDesc);
+            SectionEnabledEntry = file.Bind(SectionName, nameof(SectionEnabled), alwaysBound, SectionEnabledDesc);
+            ItemListTypeEntry = file.Bind(SectionName, nameof(ItemListType), ListType.Blacklist, ItemListTypeDesc);
+            EquipmentListTypeEntry = file.Bind(SectionName, nameof(EquipmentListType), ListType.Blacklist, EquipmentListTypeDesc);
+            KeyItemListTypeEntry = file.Bind(SectionName, nameof(KeyItemListType), ListType.Blacklist, KeyItemListTypeDesc);
+            ItemListEntry = file.Bind(SectionName, nameof(ItemList), "", ItemListDesc);
+            EquipmentListEntry = file.Bind(SectionName, nameof(EquipmentList), "", EquipmentListDesc);
+            KeyItemListEntry = file.Bind(SectionName, nameof(KeyItemList), "", KeyItemListDesc);
 
             if (parseValues)
             {
@@ -153,7 +153,7 @@ namespace PartialItemDisplay
 
                 try
                 {
-                    Items.AddRange(ItemListEntry.Value
+                    ItemList.AddRange(ItemListEntry.Value
                         .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                         .Select(el => el.Trim())
                         .Distinct());
@@ -166,7 +166,7 @@ namespace PartialItemDisplay
 
                 try
                 {
-                    Equipments.AddRange(EquipmentListEntry.Value
+                    EquipmentList.AddRange(EquipmentListEntry.Value
                         .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                         .Select(el => el.Trim())
                         .Distinct());
@@ -179,7 +179,7 @@ namespace PartialItemDisplay
 
                 try
                 {
-                    KeyItems.AddRange(KeyItemListEntry.Value
+                    KeyItemList.AddRange(KeyItemListEntry.Value
                         .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                         .Select(el => el.Trim())
                         .Distinct());
@@ -196,9 +196,9 @@ namespace PartialItemDisplay
                 ItemListTypeEntry.Value = ItemListType;
                 EquipmentListTypeEntry.Value = EquipmentListType;
                 KeyItemListTypeEntry.Value = KeyItemListType;
-                ItemListEntry.Value = string.Join(", ", Items);
-                EquipmentListEntry.Value = string.Join(", ", Equipments);
-                KeyItemListEntry.Value = string.Join(", ", KeyItems);
+                ItemListEntry.Value = string.Join(", ", ItemList);
+                EquipmentListEntry.Value = string.Join(", ", EquipmentList);
+                KeyItemListEntry.Value = string.Join(", ", KeyItemList);
             }
         }
 
@@ -282,24 +282,24 @@ namespace PartialItemDisplay
 
         private List<string> GetItemList()
         {
-            return Items;
+            return ItemList;
         }
 
         private void ItemListItemAdded(string value, int index)
         {
-            Items.Insert(index, value);
+            ItemList.Insert(index, value);
             if (AfterFieldChanged())
             {
-                ItemListEntry.Value = string.Join(", ", Items);
+                ItemListEntry.Value = string.Join(", ", ItemList);
             }
         }
 
         private void ItemListItemRemoved(int index)
         {
-            Items.RemoveAt(index);
+            ItemList.RemoveAt(index);
             if (AfterFieldChanged())
             {
-                ItemListEntry.Value = string.Join(", ", Items);
+                ItemListEntry.Value = string.Join(", ", ItemList);
             }
         }
 
@@ -320,24 +320,24 @@ namespace PartialItemDisplay
 
         private List<string> GetEquipmentList()
         {
-            return Equipments;
+            return EquipmentList;
         }
 
         private void EquipmentListItemAdded(string value, int index)
         {
-            Equipments.Insert(index, value);
+            EquipmentList.Insert(index, value);
             if (AfterFieldChanged())
             {
-                EquipmentListEntry.Value = string.Join(", ", Equipments);
+                EquipmentListEntry.Value = string.Join(", ", EquipmentList);
             }
         }
 
         private void EquipmentListItemRemoved(int index)
         {
-            Equipments.RemoveAt(index);
+            EquipmentList.RemoveAt(index);
             if (AfterFieldChanged())
             {
-                EquipmentListEntry.Value = string.Join(", ", Equipments);
+                EquipmentListEntry.Value = string.Join(", ", EquipmentList);
             }
         }
 
@@ -360,24 +360,24 @@ namespace PartialItemDisplay
 
         private List<string> GetKeyItemList()
         {
-            return KeyItems;
+            return KeyItemList;
         }
 
         private void KeyItemListItemAdded(string value, int index)
         {
-            KeyItems.Insert(index, value);
+            KeyItemList.Insert(index, value);
             if (AfterFieldChanged())
             {
-                KeyItemListEntry.Value = string.Join(", ", KeyItems);
+                KeyItemListEntry.Value = string.Join(", ", KeyItemList);
             }
         }
 
         private void KeyItemListItemRemoved(int index)
         {
-            KeyItems.RemoveAt(index);
+            KeyItemList.RemoveAt(index);
             if (AfterFieldChanged())
             {
-                KeyItemListEntry.Value = string.Join(", ", Items);
+                KeyItemListEntry.Value = string.Join(", ", ItemList);
             }
         }
 

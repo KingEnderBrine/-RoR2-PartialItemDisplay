@@ -20,7 +20,7 @@ namespace PartialItemDisplay
     {
         public const string GUID = "com.KingEnderBrine.PartialItemDisplay";
         public const string Name = "Partial Item Display";
-        public const string Version = "1.4.1";
+        public const string Version = "1.4.2";
 
         internal static PartialItemDisplayPlugin Instance { get; private set; }
         internal static ManualLogSource InstanceLogger { get => Instance?.Logger; }
@@ -185,9 +185,9 @@ namespace PartialItemDisplay
             switch (section.EquipmentListType)
             {
                 case ListType.Blacklist:
-                    return section.Equipments.Contains(equipmentDef.name);
+                    return section.EquipmentList.Contains(equipmentDef.name);
                 case ListType.Whitelist:
-                    return !section.Equipments.Contains(equipmentDef.name);
+                    return !section.EquipmentList.Contains(equipmentDef.name);
             }
 
             return false;
@@ -203,9 +203,9 @@ namespace PartialItemDisplay
             switch (section.ItemListType)
             {
                 case ListType.Blacklist:
-                    return section.Items.Contains(itemDef.name);
+                    return section.ItemList.Contains(itemDef.name);
                 case ListType.Whitelist:
-                    return !section.Items.Contains(itemDef.name);
+                    return !section.ItemList.Contains(itemDef.name);
             }
 
             return false;
@@ -221,9 +221,9 @@ namespace PartialItemDisplay
             switch (section.KeyItemListType)
             {
                 case ListType.Blacklist:
-                    return section.KeyItems.Contains(keyItemDef.name);
+                    return section.KeyItemList.Contains(keyItemDef.name);
                 case ListType.Whitelist:
-                    return !section.KeyItems.Contains(keyItemDef.name);
+                    return !section.KeyItemList.Contains(keyItemDef.name);
             }
 
             return false;
