@@ -20,7 +20,7 @@ namespace PartialItemDisplay
     {
         public const string GUID = "com.KingEnderBrine.PartialItemDisplay";
         public const string Name = "Partial Item Display";
-        public const string Version = "1.4.0";
+        public const string Version = "1.4.1";
 
         internal static PartialItemDisplayPlugin Instance { get; private set; }
         internal static ManualLogSource InstanceLogger { get => Instance?.Logger; }
@@ -35,6 +35,7 @@ namespace PartialItemDisplay
 
             HookEndpointManager.Modify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.UpdateItemDisplay)), (ILContext.Manipulator)UpdateItemDisplayIL);
             HookEndpointManager.Modify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.SetEquipmentDisplay), BindingFlags.NonPublic | BindingFlags.Instance), (ILContext.Manipulator)SetEquipmentDisplayIL);
+            HookEndpointManager.Modify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.SetKeyItemDisplay), BindingFlags.NonPublic | BindingFlags.Instance), (ILContext.Manipulator)SetKeyItemDisplayIL);
 
             RoR2Application.onLoad += OnLoad;
         }
@@ -50,6 +51,7 @@ namespace PartialItemDisplay
 
             HookEndpointManager.Unmodify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.UpdateItemDisplay)), (ILContext.Manipulator)UpdateItemDisplayIL);
             HookEndpointManager.Unmodify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.SetEquipmentDisplay), BindingFlags.NonPublic | BindingFlags.Instance), (ILContext.Manipulator)SetEquipmentDisplayIL);
+            HookEndpointManager.Unmodify(typeof(CharacterModel).GetMethod(nameof(CharacterModel.SetKeyItemDisplay), BindingFlags.NonPublic | BindingFlags.Instance), (ILContext.Manipulator)SetKeyItemDisplayIL);
             
             InLobbyConfigIntegration.OnDestroy();
             RoR2Application.onLoad -= OnLoad;
@@ -97,6 +99,27 @@ namespace PartialItemDisplay
             c.Emit(OpCodes.Brtrue, retLabel);
         }
 
+        private static void SetKeyItemDisplayIL(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            ILLabel retLabel = null;
+
+            c.GotoNext(
+                MoveType.After,
+                x => x.MatchLdarg(out _),
+                x => x.MatchLdfld(out _),
+                x => x.MatchCallOrCallvirt(out _),
+                x => x.MatchBrfalse(out retLabel)
+                );
+
+            c.Emit(OpCodes.Ldarg_1);
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldfld, typeof(CharacterModel).GetField(nameof(CharacterModel.body)));
+            c.Emit(OpCodes.Call, typeof(PartialItemDisplayPlugin).GetMethod(nameof(IgnoreKeyItemDisplay), BindingFlags.NonPublic | BindingFlags.Static));
+            c.Emit(OpCodes.Brtrue, retLabel);
+        }
+
         private static bool IgnoreEquipmentDisplay(EquipmentIndex index, CharacterBody body)
         {
             if (!Enabled.Value || !body)
@@ -104,11 +127,11 @@ namespace PartialItemDisplay
                 return false;
             }
             CharacterSections.TryGetValue(body.bodyIndex, out var characterSection);
-            if (characterSection != null && characterSection.SectionEnabled.Value)
+            if (characterSection != null && characterSection.SectionEnabled)
             {
                 return ProcessEquipmentDisplay(index, characterSection);
             }
-            if (DefaultSection.SectionEnabled.Value)
+            if (DefaultSection.SectionEnabled)
             {
                 return ProcessEquipmentDisplay(index, DefaultSection);
             }
@@ -122,13 +145,31 @@ namespace PartialItemDisplay
                 return false;
             }
             CharacterSections.TryGetValue(body.bodyIndex, out var characterSection);
-            if (characterSection != null && characterSection.SectionEnabled.Value)
+            if (characterSection != null && characterSection.SectionEnabled)
             {
                 return ProcessItemDisplay(itemIndex, characterSection);
             }
-            if (DefaultSection.SectionEnabled.Value)
+            if (DefaultSection.SectionEnabled)
             {
                 return ProcessItemDisplay(itemIndex, DefaultSection);
+            }
+            return false;
+        }
+
+        private static bool IgnoreKeyItemDisplay(KeyItemIndex keyItemIndex, CharacterBody body)
+        {
+            if (!Enabled.Value || !body)
+            {
+                return false;
+            }
+            CharacterSections.TryGetValue(body.bodyIndex, out var characterSection);
+            if (characterSection != null && characterSection.SectionEnabled)
+            {
+                return ProcessKeyItemDisplay(keyItemIndex, characterSection);
+            }
+            if (DefaultSection.SectionEnabled)
+            {
+                return ProcessKeyItemDisplay(keyItemIndex, DefaultSection);
             }
             return false;
         }
@@ -141,7 +182,7 @@ namespace PartialItemDisplay
                 return false;
             }
 
-            switch (section.EquipmentListType.Value)
+            switch (section.EquipmentListType)
             {
                 case ListType.Blacklist:
                     return section.Equipments.Contains(equipmentDef.name);
@@ -159,7 +200,7 @@ namespace PartialItemDisplay
             {
                 return false;
             }
-            switch (section.ItemListType.Value)
+            switch (section.ItemListType)
             {
                 case ListType.Blacklist:
                     return section.Items.Contains(itemDef.name);
@@ -170,41 +211,68 @@ namespace PartialItemDisplay
             return false;
         }
 
-        private void SetupConfig()
+        private static bool ProcessKeyItemDisplay(KeyItemIndex index, ItemDisplayConfigSection section)
         {
-            Enabled = Config.Bind("Main", "Enabled", true, "Is this mod enabled");
-            DefaultSection = new ItemDisplayConfigSection(Config, "Default", true);
-
-            CharacterSections = new Dictionary<BodyIndex, ItemDisplayConfigSection>();
-            foreach (var def in SurvivorCatalog.allSurvivorDefs)
+            var keyItemDef = KeyItemCatalog.GetKeyItemDef(index);
+            if (!keyItemDef)
             {
-                var bodyIndex = SurvivorCatalog.GetBodyIndexFromSurvivorIndex(def.survivorIndex);
-                var configSection = new ItemDisplayConfigSection(
-                    Config,
-                    Language.english.GetLocalizedStringByToken(def.displayNameToken));
-                CharacterSections[bodyIndex] = configSection;
+                return false;
+            }
+            switch (section.KeyItemListType)
+            {
+                case ListType.Blacklist:
+                    return section.KeyItems.Contains(keyItemDef.name);
+                case ListType.Whitelist:
+                    return !section.KeyItems.Contains(keyItemDef.name);
             }
 
-            foreach (var masterObject in MasterCatalog.allAiMasters)
+            return false;
+        }
+
+        private void SetupConfig()
+        {
+            Config.SaveOnConfigSet = false;
+            try
             {
-                var master = masterObject.GetComponent<CharacterMaster>();
-                var body = master.bodyPrefab.GetComponent<CharacterBody>();
-                var bodyIndex = body.bodyIndex;
-                if (CharacterSections.ContainsKey(bodyIndex))
+                Enabled = Config.Bind("Main", "Enabled", true, "Is this mod enabled");
+                DefaultSection = new ItemDisplayConfigSection(Config, "Default", true);
+
+                CharacterSections = new Dictionary<BodyIndex, ItemDisplayConfigSection>();
+                foreach (var def in SurvivorCatalog.allSurvivorDefs)
                 {
-                    continue;
+                    var bodyIndex = SurvivorCatalog.GetBodyIndexFromSurvivorIndex(def.survivorIndex);
+                    var configSection = new ItemDisplayConfigSection(
+                        Config,
+                        Language.english.GetLocalizedStringByToken(def.displayNameToken));
+                    CharacterSections[bodyIndex] = configSection;
                 }
 
-                var model = body.GetComponentInChildren<CharacterModel>();
-                if (!model || !model.itemDisplayRuleSet || model.itemDisplayRuleSet.isEmpty)
+                foreach (var masterObject in MasterCatalog.allAiMasters)
                 {
-                    continue;
-                }
+                    var master = masterObject.GetComponent<CharacterMaster>();
+                    var body = master.bodyPrefab.GetComponent<CharacterBody>();
+                    var bodyIndex = body.bodyIndex;
+                    if (CharacterSections.ContainsKey(bodyIndex))
+                    {
+                        continue;
+                    }
 
-                var configSection = new ItemDisplayConfigSection(
-                    Config,
-                    Language.english.GetLocalizedStringByToken(body.baseNameToken) + " (" + body.name + ")");
-                CharacterSections[bodyIndex] = configSection;
+                    var model = body.GetComponentInChildren<CharacterModel>();
+                    if (!model || !model.itemDisplayRuleSet || model.itemDisplayRuleSet.isEmpty)
+                    {
+                        continue;
+                    }
+
+                    var configSection = new ItemDisplayConfigSection(
+                        Config,
+                        Language.english.GetLocalizedStringByToken(body.baseNameToken) + " (" + body.name + ")");
+                    CharacterSections[bodyIndex] = configSection;
+                }
+            }
+            finally
+            {
+                Config.OrphanedEntries.Clear();
+                Config.Save();
             }
 
             InLobbyConfigIntegration.OnStart();
